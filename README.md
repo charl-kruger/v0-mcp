@@ -2,6 +2,14 @@
 
 A Cloudflare Workers-based Model Context Protocol (MCP) server that provides tools to interact with the V0 Platform API. This allows AI assistants to create and manage AI-powered chat conversations, projects, and more through the V0 platform.
 
+## Architecture & Flow
+
+- The worker is deployed as a Cloudflare Worker.
+- All requests are handled at `/mcp` (for JSON-RPC MCP requests) and `/sse` (for Server-Sent Events).
+- The V0 API key is always sourced from the environment variable `V0_API_KEY` (set in your Cloudflare environment or `wrangler.jsonc`).
+- The worker sets up the MCP agent (`MyMCP`) with the API key and exposes a set of tools for interacting with the V0 Platform.
+- No authentication is performed via request headers; all authentication is via the environment variable.
+
 ## Features
 
 - **Chat Management**: Create, retrieve, and manage AI chat conversations
@@ -59,6 +67,11 @@ Deploy to Cloudflare Workers:
 npm run deploy
 ```
 
+## API Endpoints
+
+- **MCP Endpoint**: `/mcp` - Main MCP server endpoint (JSON-RPC)
+- **SSE Endpoint**: `/sse` - Server-Sent Events endpoint for real-time communication
+
 ## Available Tools
 
 ### Chat Operations
@@ -71,23 +84,13 @@ Create a new chat conversation with the V0 AI.
 
 - `message` (string, required): The message to send to V0 AI
 - `system` (string, optional): Optional system prompt to guide the AI
-- `chatPrivacy` (string, optional): Chat privacy setting ("private" or "public")
-- `modelId` (string, optional): Model ID to use ("v0-1.5-sm", "v0-1.5-md", "v0-1.5-lg")
+- `chatPrivacy` ("private" | "public", optional): Chat privacy setting
+- `modelId` ("v0-1.5-sm" | "v0-1.5-md" | "v0-1.5-lg", optional): Model ID to use
 - `imageGenerations` (boolean, optional): Enable image generations
-
-**Example:**
-
-```json
-{
-  "message": "Create a responsive navbar with Tailwind CSS",
-  "system": "You are an expert React developer",
-  "modelId": "v0-1.5-md"
-}
-```
 
 #### `get_chat`
 
-Retrieve a chat by its ID.
+Retrieve details for a specific chat session by its ID.
 
 **Parameters:**
 
@@ -95,7 +98,7 @@ Retrieve a chat by its ID.
 
 #### `add_message`
 
-Add a message to an existing chat.
+Add a new message to an existing chat session.
 
 **Parameters:**
 
@@ -104,7 +107,7 @@ Add a message to an existing chat.
 
 #### `find_chats`
 
-Find chat history with pagination.
+List existing chat sessions. Use this to browse your chat history, with optional pagination.
 
 **Parameters:**
 
@@ -113,7 +116,7 @@ Find chat history with pagination.
 
 #### `delete_chat`
 
-Delete a chat by its ID.
+Delete a chat session by its ID.
 
 **Parameters:**
 
@@ -123,7 +126,7 @@ Delete a chat by its ID.
 
 #### `create_project`
 
-Create a new V0 project.
+Create a new project on the V0 platform.
 
 **Parameters:**
 
@@ -132,7 +135,7 @@ Create a new V0 project.
 
 #### `find_projects`
 
-Find projects with pagination.
+List your v0 projects. Use this to browse and manage your projects, with optional pagination.
 
 **Parameters:**
 
@@ -143,26 +146,21 @@ Find projects with pagination.
 
 #### `get_user_info`
 
-Get current user information.
+Retrieve information about the current user, such as user ID, email, and name.
 
 **Parameters:** None
 
 #### `get_user_plan`
 
-Get user plan and billing information.
+Get the current user's plan and billing details. Use this to check your subscription and usage limits.
 
 **Parameters:** None
 
 #### `check_rate_limits`
 
-Check current API rate limits.
+Check your current API rate limits and usage. Use this to monitor your quota and avoid hitting rate limits.
 
 **Parameters:** None
-
-## API Endpoints
-
-- **MCP Endpoint**: `/mcp` - Main MCP server endpoint
-- **SSE Endpoint**: `/sse` - Server-Sent Events endpoint for real-time communication
 
 ## Usage Examples
 
@@ -205,7 +203,7 @@ curl -X POST http://localhost:8787/mcp \
 
 The MCP server includes comprehensive error handling:
 
-- **Authentication Errors**: Invalid or missing API keys
+- **Authentication Errors**: Invalid or missing API keys (from environment)
 - **Rate Limit Errors**: When API rate limits are exceeded
 - **Validation Errors**: Invalid parameters or missing required fields
 - **Network Errors**: Connection issues with the V0 API
@@ -230,23 +228,6 @@ The `wrangler.jsonc` file contains the Cloudflare Workers configuration:
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
     "V0_API_KEY": ""
-  },
-  "migrations": [
-    {
-      "new_sqlite_classes": ["V0MCP"],
-      "tag": "v1"
-    }
-  ],
-  "durable_objects": {
-    "bindings": [
-      {
-        "class_name": "V0MCP",
-        "name": "MCP_OBJECT"
-      }
-    ]
-  },
-  "observability": {
-    "enabled": true
   }
 }
 ```
