@@ -1,173 +1,62 @@
-# V0 Platform MCP Server
+# V0 MCP Server
 
-A Cloudflare Workers-based Model Context Protocol (MCP) server that provides tools to interact with the V0 Platform API. This allows AI assistants to create and manage AI-powered chat conversations, projects, and more through the V0 platform.
+A comprehensive Model Context Protocol (MCP) server that provides complete access to the [v0 Platform API](https://v0.dev/docs/api/platform). This server enables AI agents to create and manage chats, projects, deployments, integrations, webhooks, and interact with the full v0 development infrastructure on behalf of users.
 
-## Architecture & Flow
+## 🚀 Features
 
-- The worker is deployed as a Cloudflare Worker.
-- All requests are handled at `/mcp` (for JSON-RPC MCP requests) and `/sse` (for Server-Sent Events).
-- The V0 API key is always sourced from the environment variable `V0_API_KEY` (set in your Cloudflare environment or `wrangler.jsonc`).
-- The worker sets up the MCP agent (`MyMCP`) with the API key and exposes a set of tools for interacting with the V0 Platform.
-- No authentication is performed via request headers; all authentication is via the environment variable.
+- **🔐 Simple Authentication**: Pass your v0 API key via `X-V0-Key` header
+- **💬 Complete Chat Management**: Full CRUD operations for AI chat sessions, messages, and versions
+- **📁 Project Management**: Create and organize v0 projects with full lifecycle management
+- **🚀 Deployment Management**: Deploy to Vercel, manage deployments, view logs and errors
+- **🔗 Integration Support**: Vercel project integrations for seamless deployments
+- **🎣 Webhook Management**: Complete webhook/hook management for event-driven workflows
+- **👤 User Management**: Access user information, billing, plans, and scopes
+- **⏱️ Rate Limit Monitoring**: Monitor API usage and avoid throttling
 
-## Features
+## 🛠️ Architecture
 
-- **Chat Management**: Create, retrieve, and manage AI chat conversations
-- **Project Operations**: Create and manage V0 projects
-- **User Management**: Access user information and billing details
-- **Rate Limit Monitoring**: Check API rate limits
-- **Error Handling**: Comprehensive error handling with detailed error messages
+This MCP server uses:
 
-## Prerequisites
+- **Official v0-sdk v0.6.2**: Latest v0 Platform SDK for all API interactions
+- **Header-based Authentication**: Simple `X-V0-Key` header for API key authentication
+- **Full API Coverage**: Implements all available tools from the v0 Platform API
+- **Type Safety**: Complete TypeScript implementation with proper error handling
 
-1. **V0 API Key**: Get your API key from [v0.dev/chat/settings/keys](https://v0.dev/chat/settings/keys)
-2. **Cloudflare Account**: You'll need a Cloudflare account to deploy the worker
-3. **Node.js**: Version 18 or higher
+## 🔐 Authentication
 
-## Installation
+Simply pass your v0 API key in the `X-V0-Key` header with each request.
 
-1. Clone this repository:
+### How to Get Your V0 API Key
 
-```bash
-git clone <repository-url>
-cd v0-mcp
-```
+1. Go to [v0.dev](https://v0.dev)
+2. Sign in to your account
+3. Navigate to your account settings
+4. Generate and copy your API key
 
-2. Install dependencies:
+### MCP Client Configuration
 
-```bash
-npm install
-```
+Configure your MCP client to use the `X-V0-Key` header:
 
-3. Set your V0 API key in the `wrangler.jsonc` file:
-
-```jsonc
+```json
 {
-  "vars": {
-    "V0_API_KEY": "your_v0_api_key_here"
+  "mcpServers": {
+    "v0": {
+      "command": "node",
+      "args": ["/path/to/your/mcp-client.js"],
+      "env": {
+        "MCP_SERVER_URL": "https://your-worker.your-subdomain.workers.dev/mcp",
+        "V0_API_KEY": "your_v0_api_key_here"
+      }
+    }
   }
 }
 ```
 
-## Development
-
-Start the development server:
+Or use curl directly:
 
 ```bash
-npm run dev
-```
-
-This will start a local development server at `http://localhost:8787`.
-
-## Deployment
-
-Deploy to Cloudflare Workers:
-
-```bash
-npm run deploy
-```
-
-## API Endpoints
-
-- **MCP Endpoint**: `/mcp` - Main MCP server endpoint (JSON-RPC)
-- **SSE Endpoint**: `/sse` - Server-Sent Events endpoint for real-time communication
-
-## Available Tools
-
-### Chat Operations
-
-#### `create_chat`
-
-Create a new chat conversation with the V0 AI.
-
-**Parameters:**
-
-- `message` (string, required): The message to send to V0 AI
-- `system` (string, optional): Optional system prompt to guide the AI
-- `chatPrivacy` ("private" | "public", optional): Chat privacy setting
-- `modelId` ("v0-1.5-sm" | "v0-1.5-md" | "v0-1.5-lg", optional): Model ID to use
-- `imageGenerations` (boolean, optional): Enable image generations
-
-#### `get_chat`
-
-Retrieve details for a specific chat session by its ID.
-
-**Parameters:**
-
-- `chatId` (string, required): The ID of the chat to retrieve
-
-#### `add_message`
-
-Add a new message to an existing chat session.
-
-**Parameters:**
-
-- `chatId` (string, required): The ID of the chat to add message to
-- `message` (string, required): The message to add to the chat
-
-#### `find_chats`
-
-List existing chat sessions. Use this to browse your chat history, with optional pagination.
-
-**Parameters:**
-
-- `limit` (number, optional): Number of chats to retrieve (default: 10)
-- `offset` (number, optional): Number of chats to skip (default: 0)
-
-#### `delete_chat`
-
-Delete a chat session by its ID.
-
-**Parameters:**
-
-- `chatId` (string, required): The ID of the chat to delete
-
-### Project Operations
-
-#### `create_project`
-
-Create a new project on the V0 platform.
-
-**Parameters:**
-
-- `name` (string, required): Name of the project
-- `description` (string, optional): Description of the project
-
-#### `find_projects`
-
-List your v0 projects. Use this to browse and manage your projects, with optional pagination.
-
-**Parameters:**
-
-- `limit` (number, optional): Number of projects to retrieve (default: 10)
-- `offset` (number, optional): Number of projects to skip (default: 0)
-
-### User Management
-
-#### `get_user_info`
-
-Retrieve information about the current user, such as user ID, email, and name.
-
-**Parameters:** None
-
-#### `get_user_plan`
-
-Get the current user's plan and billing details. Use this to check your subscription and usage limits.
-
-**Parameters:** None
-
-#### `check_rate_limits`
-
-Check your current API rate limits and usage. Use this to monitor your quota and avoid hitting rate limits.
-
-**Parameters:** None
-
-## Usage Examples
-
-### Creating a Chat
-
-```bash
-curl -X POST http://localhost:8787/mcp \
+curl -X POST https://your-worker.your-subdomain.workers.dev/mcp \
+  -H "X-V0-Key: your_v0_api_key_here" \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",
@@ -176,87 +65,215 @@ curl -X POST http://localhost:8787/mcp \
     "params": {
       "name": "create_chat",
       "arguments": {
-        "message": "Create a login form with validation",
-        "system": "You are an expert in React and form validation"
+        "message": "Create a Next.js login form"
       }
     }
   }'
 ```
 
-### Getting User Information
+## 🛠️ Available Tools
+
+### 💬 Chat Management (15 tools)
+
+- **`create_chat`**: Create new AI-powered chat sessions with system prompts and model configuration
+- **`find_chats`**: List and search existing chat sessions with pagination and filtering
+- **`initialize_chat`**: Initialize chats from zip archives for context-rich conversations
+- **`get_chat`**: Retrieve detailed information about specific chats
+- **`update_chat`**: Update chat metadata including names and settings
+- **`favorite_chat`**: Mark/unmark chats as favorites for organization
+- **`fork_chat`**: Create chat branches from specific versions for alternate directions
+- **`send_message`**: Send messages to chats with attachments and model configuration
+- **`find_chat_messages`**: Retrieve all messages from chats with pagination
+- **`get_chat_message`**: Get detailed message information including content and files
+- **`find_chat_versions`**: List all versions/iterations of chat conversations
+- **`get_chat_version`**: Retrieve specific version details with files and content
+- **`update_chat_version_files`**: Directly edit generated files in chat versions
+- **`resume_message`**: Resume interrupted or incomplete message generation
+- **`delete_chat`**: Permanently delete chat sessions
+
+### 📁 Project Management (6 tools)
+
+- **`create_project`**: Create new v0 projects with descriptions and instructions
+- **`find_projects`**: List all v0 projects with pagination
+- **`get_project_by_id`**: Retrieve specific project details by ID
+- **`get_project_by_chat_id`**: Find project associated with a chat session
+- **`update_project`**: Update project metadata and settings
+- **`assign_project_to_chat`**: Link projects to chat sessions for organization
+
+### 🚀 Deployment Management (6 tools)
+
+- **`find_deployments`**: Search deployments by project and chat IDs
+- **`create_deployment`**: Deploy chat versions to Vercel with project association
+- **`get_deployment`**: Retrieve deployment details including URLs and status
+- **`delete_deployment`**: Remove deployments from Vercel
+- **`find_deployment_logs`**: Access deployment logs with timestamp filtering
+- **`find_deployment_errors`**: Retrieve deployment errors for debugging
+
+### 🔗 Integration Management (2 tools)
+
+- **`create_vercel_project`**: Create Vercel project integrations for deployments
+- **`find_vercel_projects`**: List existing Vercel project integrations
+
+### 🎣 Webhook/Hook Management (5 tools)
+
+- **`find_hooks`**: List all configured webhooks in workspace
+- **`create_hook`**: Create new webhooks for event monitoring
+- **`get_hook`**: Retrieve detailed webhook configuration
+- **`update_hook`**: Modify webhook settings and event subscriptions
+- **`delete_hook`**: Remove webhook configurations
+
+### 👤 User Management (4 tools)
+
+- **`get_user_info`**: Retrieve authenticated user information and metadata
+- **`get_user_billing`**: Access billing usage and quota information
+- **`get_user_plan`**: Get current subscription plan and feature limits
+- **`get_user_scopes`**: List accessible scopes and team permissions
+
+### ⏱️ System Tools (1 tool)
+
+- **`check_rate_limits`**: Monitor API rate limits and usage quotas
+
+## 🏗️ Development
+
+### Prerequisites
+
+- Node.js 18+
+- Wrangler CLI
+- v0 API key
+
+### Setup
+
+1. Clone the repository
+2. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+3. Configure your environment:
+
+   ```bash
+   # Copy the example configuration
+   cp wrangler.jsonc.example wrangler.jsonc
+
+   # Edit wrangler.jsonc with your settings
+   ```
+
+4. Deploy to Cloudflare Workers:
+   ```bash
+   npm run deploy
+   ```
+
+### Local Development
+
+Run the server locally:
+
+```bash
+npm run dev
+```
+
+The server will be available at `http://localhost:8787`
+
+## 📡 API Endpoints
+
+- `POST /mcp`: MCP server endpoint (requires `X-V0-Key` header)
+- `GET /sse`: Server-sent events endpoint
+- `POST /sse/message`: SSE message endpoint
+
+## 🔧 Error Handling
+
+The server provides comprehensive error handling:
+
+- **401 Unauthorized**: Missing `X-V0-Key` header
+- **Rate Limit Errors**: When API rate limits are exceeded
+- **Validation Errors**: Invalid parameters or missing required fields
+- **Network Errors**: Connection issues with the v0 API
+
+All errors include descriptive messages to help with debugging.
+
+## 📊 Usage Examples
+
+### Creating a Chat
 
 ```bash
 curl -X POST http://localhost:8787/mcp \
+  -H "X-V0-Key: your_api_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "name": "create_chat",
+      "arguments": {
+        "message": "Create a Next.js login form with validation",
+        "system": "You are an expert in React and form validation",
+        "modelId": "v0-1.5-md"
+      }
+    }
+  }'
+```
+
+### Deploying a Chat Version
+
+```bash
+curl -X POST http://localhost:8787/mcp \
+  -H "X-V0-Key: your_api_key_here" \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",
     "id": 2,
     "method": "tools/call",
     "params": {
-      "name": "get_user_info",
-      "arguments": {}
+      "name": "create_deployment",
+      "arguments": {
+        "chatId": "chat_123",
+        "versionId": "version_456",
+        "projectId": "project_789"
+      }
     }
   }'
 ```
 
-## Error Handling
+### Using with MCP Client Libraries
 
-The MCP server includes comprehensive error handling:
+If you're using an MCP client library, configure it to include the `X-V0-Key` header:
 
-- **Authentication Errors**: Invalid or missing API keys (from environment)
-- **Rate Limit Errors**: When API rate limits are exceeded
-- **Validation Errors**: Invalid parameters or missing required fields
-- **Network Errors**: Connection issues with the V0 API
+```javascript
+const client = new MCPClient({
+  serverUrl: "https://your-worker.your-subdomain.workers.dev/mcp",
+  headers: {
+    "X-V0-Key": "your_v0_api_key_here",
+  },
+});
 
-All errors are returned with descriptive messages to help with debugging.
-
-## Configuration
-
-### Environment Variables
-
-- `V0_API_KEY`: Your V0 API key (required)
-
-### Wrangler Configuration
-
-The `wrangler.jsonc` file contains the Cloudflare Workers configuration:
-
-```jsonc
-{
-  "name": "v0-mcp",
-  "main": "src/index.ts",
-  "compatibility_date": "2025-03-10",
-  "compatibility_flags": ["nodejs_compat"],
-  "vars": {
-    "V0_API_KEY": ""
-  }
-}
+// Create a chat
+const result = await client.callTool("create_chat", {
+  message: "Build a todo app with React and TypeScript",
+  modelId: "v0-1.5-md",
+});
 ```
 
-## Security Considerations
+## 🚀 What's New in v2.0.0
 
-- **API Key Protection**: Never commit your V0 API key to version control
-- **Environment Variables**: Use Cloudflare Workers environment variables for sensitive data
-- **Rate Limiting**: Be mindful of V0 API rate limits
-- **Input Validation**: All inputs are validated using Zod schemas
+- **🆕 Official v0-sdk Integration**: Migrated from custom implementation to official v0-sdk v0.6.2
+- **📈 Complete API Coverage**: All 40+ tools from the v0 Platform API now available
+- **🔧 Enhanced Deployment Management**: Full deployment lifecycle with logs and error tracking
+- **🎣 Webhook Support**: Complete webhook management for event-driven workflows
+- **🔗 Vercel Integration**: Native Vercel project integration support
+- **💡 Improved Type Safety**: Full TypeScript implementation with comprehensive error handling
+- **📊 Advanced Chat Management**: Version control, forking, and file editing capabilities
+- **👥 User & Billing Tools**: Complete user management and billing information access
+- **🔐 Simplified Authentication**: Clean header-based API key authentication
 
-## Troubleshooting
+## 🛡️ Security Considerations
 
-### Common Issues
+- **API Key Protection**: Never commit your v0 API key to version control
+- **HTTPS**: Always use HTTPS in production
+- **Rate Limiting**: Monitor usage to avoid hitting v0 API rate limits
+- **Environment Variables**: Store API keys in secure environment variables
 
-1. **"Cannot find module 'v0-sdk'"**: Make sure you've installed the dependencies with `npm install`
-2. **"Authentication error"**: Verify your V0 API key is correctly set in the environment variables
-3. **"Rate limit exceeded"**: Check your current usage and wait before making more requests
-4. **"Invalid parameters"**: Ensure all required parameters are provided and have the correct types
-
-### Debug Mode
-
-To enable debug logging, set the `DEBUG` environment variable:
-
-```bash
-DEBUG=* npm run dev
-```
-
-## Contributing
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -264,14 +281,12 @@ DEBUG=* npm run dev
 4. Add tests if applicable
 5. Submit a pull request
 
-## License
+## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT License - see LICENSE file for details.
 
-## Support
+## 🙏 Acknowledgments
 
-For issues related to:
-
-- **V0 Platform**: Visit [v0.dev](https://v0.dev) or check their documentation
-- **Cloudflare Workers**: Visit [developers.cloudflare.com/workers](https://developers.cloudflare.com/workers)
-- **MCP Protocol**: Visit [modelcontextprotocol.io](https://modelcontextprotocol.io)
+- [v0.dev](https://v0.dev) for the comprehensive Platform API
+- [Model Context Protocol](https://modelcontextprotocol.io) for the MCP specification
+- [Cloudflare Workers](https://workers.cloudflare.com) for the serverless platform

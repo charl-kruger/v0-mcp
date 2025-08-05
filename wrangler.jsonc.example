@@ -1,6 +1,6 @@
 /**
- * For more details on how to configure Wrangler, refer to:
- * https://developers.cloudflare.com/workers/wrangler/configuration/
+ * Example Wrangler configuration for V0 MCP Server
+ * Copy this file to wrangler.jsonc and customize for your deployment
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
@@ -10,13 +10,10 @@
   "compatibility_flags": ["nodejs_compat"],
   "routes": [
     {
-      "pattern": "v0.createmcp.dev",
+      "pattern": "your-custom-domain.com",
       "custom_domain": true
     }
   ],
-  "vars": {
-    "V0_API_KEY": ""
-  },
   "migrations": [
     {
       "new_sqlite_classes": ["MyMCP"],
@@ -34,4 +31,4 @@
   "observability": {
     "enabled": true
   }
-}
+} 
