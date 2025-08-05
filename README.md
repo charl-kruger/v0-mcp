@@ -4,7 +4,7 @@ A comprehensive Model Context Protocol (MCP) server that provides complete acces
 
 ## 🚀 Features
 
-- **🔐 Simple Authentication**: Pass your v0 API key via `X-V0-Key` header
+- **🔐 Simple Authentication**: Pass your v0 API key via `key` query parameter
 - **💬 Complete Chat Management**: Full CRUD operations for AI chat sessions, messages, and versions
 - **📁 Project Management**: Create and organize v0 projects with full lifecycle management
 - **🚀 Deployment Management**: Deploy to Vercel, manage deployments, view logs and errors
@@ -18,13 +18,13 @@ A comprehensive Model Context Protocol (MCP) server that provides complete acces
 This MCP server uses:
 
 - **Official v0-sdk v0.6.2**: Latest v0 Platform SDK for all API interactions
-- **Header-based Authentication**: Simple `X-V0-Key` header for API key authentication
+- **Query Parameter Authentication**: Simple `key` query parameter for API key authentication
 - **Full API Coverage**: Implements all available tools from the v0 Platform API
 - **Type Safety**: Complete TypeScript implementation with proper error handling
 
 ## 🔐 Authentication
 
-Simply pass your v0 API key in the `X-V0-Key` header with each request.
+Simply pass your v0 API key in the `key` query parameter with each request.
 
 ### How to Get Your V0 API Key
 
@@ -35,7 +35,7 @@ Simply pass your v0 API key in the `X-V0-Key` header with each request.
 
 ### MCP Client Configuration
 
-Configure your MCP client to use the `X-V0-Key` header:
+Configure your MCP client to use the `key` query parameter:
 
 ```json
 {
@@ -44,7 +44,7 @@ Configure your MCP client to use the `X-V0-Key` header:
       "command": "node",
       "args": ["/path/to/your/mcp-client.js"],
       "env": {
-        "MCP_SERVER_URL": "https://your-worker.your-subdomain.workers.dev/mcp",
+        "MCP_SERVER_URL": "https://your-worker.your-subdomain.workers.dev/mcp?key=your_v0_api_key_here",
         "V0_API_KEY": "your_v0_api_key_here"
       }
     }
@@ -55,8 +55,7 @@ Configure your MCP client to use the `X-V0-Key` header:
 Or use curl directly:
 
 ```bash
-curl -X POST https://your-worker.your-subdomain.workers.dev/mcp \
-  -H "X-V0-Key: your_v0_api_key_here" \
+curl -X POST "https://your-worker.your-subdomain.workers.dev/mcp?key=your_v0_api_key_here" \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",
@@ -69,6 +68,42 @@ curl -X POST https://your-worker.your-subdomain.workers.dev/mcp \
       }
     }
   }'
+```
+
+### Cursor IDE Configuration
+
+To use this MCP server with Cursor IDE, add the following to your `~/.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "v0-mcp-server": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "http://localhost:8787/sse?key=YOUR_V0_API_KEY_HERE"
+      ]
+    }
+  }
+}
+```
+
+**Important**: Replace `YOUR_V0_API_KEY_HERE` with your actual v0 API key from [v0.dev](https://v0.dev).
+
+For production deployment, use your deployed worker URL:
+
+```json
+{
+  "mcpServers": {
+    "v0-mcp-server": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://your-worker.your-subdomain.workers.dev/sse?key=YOUR_V0_API_KEY_HERE"
+      ]
+    }
+  }
+}
 ```
 
 ## 🛠️ Available Tools
@@ -176,15 +211,15 @@ The server will be available at `http://localhost:8787`
 
 ## 📡 API Endpoints
 
-- `POST /mcp`: MCP server endpoint (requires `X-V0-Key` header)
-- `GET /sse`: Server-sent events endpoint
-- `POST /sse/message`: SSE message endpoint
+- `POST /mcp?key=YOUR_API_KEY`: MCP server endpoint (requires `key` query parameter)
+- `GET /sse?key=YOUR_API_KEY`: Server-sent events endpoint
+- `POST /sse/message?key=YOUR_API_KEY`: SSE message endpoint
 
 ## 🔧 Error Handling
 
 The server provides comprehensive error handling:
 
-- **401 Unauthorized**: Missing `X-V0-Key` header
+- **401 Unauthorized**: Missing `key` query parameter
 - **Rate Limit Errors**: When API rate limits are exceeded
 - **Validation Errors**: Invalid parameters or missing required fields
 - **Network Errors**: Connection issues with the v0 API
@@ -196,8 +231,7 @@ All errors include descriptive messages to help with debugging.
 ### Creating a Chat
 
 ```bash
-curl -X POST http://localhost:8787/mcp \
-  -H "X-V0-Key: your_api_key_here" \
+curl -X POST "http://localhost:8787/mcp?key=your_api_key_here" \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",
@@ -217,8 +251,7 @@ curl -X POST http://localhost:8787/mcp \
 ### Deploying a Chat Version
 
 ```bash
-curl -X POST http://localhost:8787/mcp \
-  -H "X-V0-Key: your_api_key_here" \
+curl -X POST "http://localhost:8787/mcp?key=your_api_key_here" \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",
@@ -237,14 +270,12 @@ curl -X POST http://localhost:8787/mcp \
 
 ### Using with MCP Client Libraries
 
-If you're using an MCP client library, configure it to include the `X-V0-Key` header:
+If you're using an MCP client library, configure it to include the `key` query parameter:
 
 ```javascript
 const client = new MCPClient({
-  serverUrl: "https://your-worker.your-subdomain.workers.dev/mcp",
-  headers: {
-    "X-V0-Key": "your_v0_api_key_here",
-  },
+  serverUrl:
+    "https://your-worker.your-subdomain.workers.dev/mcp?key=your_v0_api_key_here",
 });
 
 // Create a chat
@@ -264,7 +295,7 @@ const result = await client.callTool("create_chat", {
 - **💡 Improved Type Safety**: Full TypeScript implementation with comprehensive error handling
 - **📊 Advanced Chat Management**: Version control, forking, and file editing capabilities
 - **👥 User & Billing Tools**: Complete user management and billing information access
-- **🔐 Simplified Authentication**: Clean header-based API key authentication
+- **🔐 Simplified Authentication**: Clean query parameter-based API key authentication
 
 ## 🛡️ Security Considerations
 
@@ -272,6 +303,7 @@ const result = await client.callTool("create_chat", {
 - **HTTPS**: Always use HTTPS in production
 - **Rate Limiting**: Monitor usage to avoid hitting v0 API rate limits
 - **Environment Variables**: Store API keys in secure environment variables
+- **Query Parameter Security**: Be aware that API keys in query parameters may be logged in server logs
 
 ## 🤝 Contributing
 

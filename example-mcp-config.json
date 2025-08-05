@@ -6,10 +6,8 @@
         "-X",
         "POST",
         "-H",
-        "X-V0-Key: your_v0_api_key_here",
-        "-H",
         "Content-Type: application/json",
-        "https://v0.createmcp.dev/mcp"
+        "https://v0.createmcp.dev/mcp?key=YOUR_V0_API_KEY_HERE"
       ]
     }
   }
